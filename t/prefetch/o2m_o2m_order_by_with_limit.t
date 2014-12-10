@@ -6,6 +6,7 @@ use Test::More;
 use lib qw(t/lib);
 use DBICTest ':DiffSQL';
 use DBIx::Class::SQLMaker::LimitDialects;
+use Sub::Name 'subname';
 
 my ($ROWS, $OFFSET) = (
    DBIx::Class::SQLMaker::LimitDialects->__rows_bindtype,
@@ -15,6 +16,15 @@ my ($ROWS, $OFFSET) = (
 my $schema = DBICTest->init_schema(quote_names => 1);
 
 my $artist_rs = $schema->resultset('Artist');
+
+*DBIx::Class::Storage::DBI::SQLite::_order_aggregate =
+  subname 'DBIx::Class::Storage::DBI::SQLite::_order_aggregate' => sub {
+    my ($self, $colinfo, $is_desc) = @_;
+    my $agg = $self->next::method($colinfo, $is_desc);
+
+    return lc $agg if $colinfo->{data_type} eq 'varchar';
+    return $agg;
+  };
 
 my $filtered_cd_rs = $artist_rs->search_related('cds_unordered',
   { "me.rank" => 13 },
@@ -100,8 +110,8 @@ for (
               ON "tracks"."cd" = "cds_unordered"."cdid"
           WHERE "me"."rank" = ?
           GROUP BY "cds_unordered"."cdid", "cds_unordered"."artist", "cds_unordered"."title", "cds_unordered"."year", "cds_unordered"."genreid", "cds_unordered"."single_track", "me"."name"
-          ORDER BY  MAX("genre"."name") DESC,
-                    MAX( tracks.title ) DESC,
+          ORDER BY  max("genre"."name") DESC,
+                    max( tracks.title ) DESC,
                     "me"."name" ASC,
                     "year" DESC,
                     "cds_unordered"."title" DESC

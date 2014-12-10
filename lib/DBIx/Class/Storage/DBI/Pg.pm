@@ -165,6 +165,15 @@ sub sqlt_type {
   return 'PostgreSQL';
 }
 
+sub _order_aggregate {
+  my ($self, $colinfo, $is_desc) = @_;
+
+  return ($is_desc ? 'BOOL_OR' : 'BOOL_AND')
+    if ($colinfo->{data_type} || '') =~ /\Abool(?:ean)\z/i;
+
+  return $self->next::method($colinfo, $is_desc);
+}
+
 sub bind_attribute_by_data_type {
   my ($self,$data_type) = @_;
 

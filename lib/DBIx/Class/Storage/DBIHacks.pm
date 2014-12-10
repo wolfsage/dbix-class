@@ -536,6 +536,11 @@ sub _resolve_aliastypes_from_select_args {
   return $aliases_by_type;
 }
 
+sub _order_aggregate {
+  my ($self, $colinfo, $is_desc) = @_;
+  return ($is_desc ? 'MAX' : 'MIN');
+}
+
 # This is the engine behind { distinct => 1 } and the general
 # complex prefetch grouper
 sub _group_over_selection {
@@ -644,7 +649,7 @@ sub _group_over_selection {
 
       $new_order_by[$o_idx] = \[
         sprintf( '%s( %s )%s',
-          ($is_desc ? 'MAX' : 'MIN'),
+          $self->_order_aggregate($chunk_ci, $is_desc),
           $chunk,
           ($is_desc ? ' DESC' : ''),
         ),
