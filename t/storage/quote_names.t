@@ -132,6 +132,7 @@ for my $db (sort {
 
     my $quoted_artist = $schema->storage->sql_maker->_quote('artist');
 
+    local $TODO = "$db has no DDL quoting" if $db eq 'DB2';
     like ($ddl, qr/^CREATE\s+TABLE\s+\Q$quoted_artist/msi, "$db DDL contains expected quoted table name");
   }
 }
