@@ -58,7 +58,11 @@ else
   sudo bash -c 'echo -e "firebird2.5-super\tshared/firebird/enabled\tboolean\ttrue" | debconf-set-selections'
   sudo bash -c 'echo -e "firebird2.5-super\tshared/firebird/sysdba_password/new_password\tpassword\t123" | debconf-set-selections'
 
-  apt_install $common_packages libmysqlclient-dev memcached firebird2.5-super firebird2.5-dev unixodbc-dev expect
+
+  sudo bash -c 'echo "deb http://archive.canonical.com/ubuntu precise partner" >> /etc/apt/sources.list'
+  run_or_err "Updating apt sources" "sudo apt-get update"
+
+  apt_install $common_packages libmysqlclient-dev memcached firebird2.5-super firebird2.5-dev unixodbc-dev expect db2exc
 
   run_or_err "Cloning poor man's cache from github" "git clone --depth=1 --single-branch --branch=oracle/10.2.0 https://github.com/poortravis/poormanscache.git $CACHE_DIR && $CACHE_DIR/reassemble"
   run_or_err "Installing OracleXE manually from deb" "sudo dpkg -i $CACHE_DIR/apt_cache/oracle-xe_10.2.0.1-1.1_i386.deb || sudo bash -c 'source maint/travis-ci_scripts/common.bash && apt_install -f'"
@@ -212,6 +216,23 @@ FileUsage       = 1
   '"
 
   export ORACLE_HOME="$CACHE_DIR/ora_instaclient/x86-64/oracle_instaclient_10.2.0.5.0"
+
+### config db2exc
+  # WTF is this world-writable?
+  # Strip the write bit so it doesn't trip Ubuntu's symlink-in-/tmp attack mitigation
+  sudo chmod -R o-w ~dasusr1/das
+
+  run_or_err "Restarting DB2" "sudo /etc/init.d/db2exc restart"
+
+  export DB2_HOME=/opt/ibm/db2/V9.7
+  export DBICTEST_DB2_DSN=dbi:DB2:DATABASE=DBICTEST
+  export DBICTEST_DB2_USER=db2inst1
+  export DBICTEST_DB2_PASS=abc123456
+
+  run_or_err "Set up DB2 users" "echo -e '$DBICTEST_DB2_PASS\n$DBICTEST_DB2_PASS' | sudo passwd $DBICTEST_DB2_USER"
+
+  run_or_err "Create DB2 database" "sudo -u db2inst1 -i db2 'CREATE DATABASE DBICTEST' && sudo -u db2inst1 -i db2 'ACTIVATE DATABASE DBICTEST'"
+
 fi
 
 # The debian package is oddly broken - uses a /bin/env based shebang
