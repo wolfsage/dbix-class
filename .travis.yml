@@ -74,6 +74,7 @@ perl:
 
 env:
   - CLEANTEST=false
+  - CLEANTEST=true
 
 ###
 ### For the following two phases -e is *set*
