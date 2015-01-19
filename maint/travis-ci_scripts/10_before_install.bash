@@ -64,6 +64,12 @@ else
 
   apt_install $common_packages libmysqlclient-dev memcached firebird2.5-super firebird2.5-dev unixodbc-dev expect db2exc
 
+  run_or_err "Installing dummy multiarch bc package" '
+    cd "$(mktemp -d)"
+    wget -q http://ilmari.org/bc-multiarch/bc-multiarch_1.0_all.deb
+    sudo dpkg -i bc-multiarch_1.0_all.deb || sudo bash -c "source maint/travis-ci_scripts/common.bash && apt_install -f"
+  '
+
   run_or_err "Cloning poor man's cache from github" "git clone --depth=1 --single-branch --branch=oracle/10.2.0 https://github.com/poortravis/poormanscache.git $CACHE_DIR && $CACHE_DIR/reassemble"
   run_or_err "Installing OracleXE manually from deb" "sudo dpkg -i $CACHE_DIR/apt_cache/oracle-xe_10.2.0.1-1.1_i386.deb || sudo bash -c 'source maint/travis-ci_scripts/common.bash && apt_install -f'"
 
