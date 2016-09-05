@@ -6,6 +6,8 @@ use strict;
 use MyApp::Schema;
 use DBIx::Class::_Util 'parent_dir';
 
+MyApp::Schema::Result::Track->belongs_to('cd' => 'MyApp::Schema::Result::Cd', 'cdid');
+
 my $db_fn = parent_dir( $INC{'MyApp/Schema.pm'} ) . '../db/example.db';
 
 # for other DSNs, e.g. MySql, see the perldoc for the relevant dbd

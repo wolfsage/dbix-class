@@ -24,6 +24,4 @@ __PACKAGE__->set_primary_key('trackid');
 
 __PACKAGE__->add_unique_constraint([qw( title cdid )]);
 
-__PACKAGE__->belongs_to('cd' => 'MyApp::Schema::Result::Cd', 'cdid');
-
 1;
